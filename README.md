@@ -22,6 +22,6 @@
 |-----------|----------------------------------|
 | **trainer pos1**         | **Set save pos1** |
 | **trainer pos2**         | **Set save pos2** |
-| **trainer save <name>**  | **Save parkour**  |
-| **trainer start <name>** | **Start parkour** |
+| **trainer save [name]**  | **Save parkour**  |
+| **trainer start [name]** | **Start parkour** |
 | **trainer stop**         | **Stop parkour**  |
