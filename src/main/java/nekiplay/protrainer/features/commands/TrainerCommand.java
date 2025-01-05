@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
+import meteordevelopment.meteorclient.events.game.GameLeftEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.orbit.EventHandler;
 import nekiplay.Main;
@@ -29,6 +30,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class TrainerCommand extends Command {
@@ -41,6 +44,7 @@ public class TrainerCommand extends Command {
 	public Gson gson = new Gson();
 	public boolean started = false;
 	public Vec3d start_position = new Vec3d(0, 0, 0);
+	private final ExecutorService workerThread = Executors.newSingleThreadExecutor();
 
 	public List<BlockData> replaced = new ArrayList<>();
 
@@ -68,7 +72,8 @@ public class TrainerCommand extends Command {
 					dir.mkdir();
 				}
 				File dir2 = new File(dir, map + ".json");
-
+				start_position = mc.player.getPos();
+				started = true;
 				try {
 					BufferedReader reader = Files.newBufferedReader(Path.of(dir2.toURI()), StandardCharsets.UTF_8);
 					try {
@@ -86,6 +91,7 @@ public class TrainerCommand extends Command {
 							replaced.add(blockData);
 
 							mc.world.setBlockState(pos, state);
+							mc.player.setPos(start_position.x, start_position.y, start_position.z);
 						}
 
 					} catch (JsonSyntaxException e) {
@@ -95,9 +101,8 @@ public class TrainerCommand extends Command {
 				} catch (IOException e) {
 					ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
 				}
+				mc.player.setPos(start_position.x, start_position.y, start_position.z);
 				info("Successfully loaded");
-				start_position = mc.player.getPos();
-				started = true;
 				return SINGLE_SUCCESS;
 			}
 			else {
@@ -111,13 +116,13 @@ public class TrainerCommand extends Command {
 				return SINGLE_SUCCESS;
 			}
 			for (BlockData replace : replaced) {
-				mc.player.setPos(start_position.x, start_position.y, start_position.z);
 				BlockState state = Block.getStateFromRawId(replace.blockId);
 				BlockPos pos = new BlockPos((int) replace.blockPosition.x, (int) replace.blockPosition.y, (int) replace.blockPosition.z);
 				mc.world.setBlockState(pos, state);
 				mc.player.setPos(start_position.x, start_position.y, start_position.z);
-				started = false;
 			}
+			mc.player.setPos(start_position.x, start_position.y, start_position.z);
+			started = false;
 			replaced.clear();
 			info("Parkour has been stopped");
 			return SINGLE_SUCCESS;
@@ -135,7 +140,6 @@ public class TrainerCommand extends Command {
 			Vec3d start = mc.player.getPos();
 			ProTrainerMap trainerMap = new ProTrainerMap();
 			trainerMap.start = new BlockPosition(start);
-
 			List<BlockPos> blocks = collectBlocksBetween(mc.world, pos1, pos2);
 			List<BlockPos> sortedBlocks = new ArrayList<>();
 			for (BlockPos pos : blocks) {
@@ -207,5 +211,10 @@ public class TrainerCommand extends Command {
 				accesor.setOnGround(true);
 			}
 		}
+	}
+
+	@EventHandler
+	private void onGameLeft(GameLeftEvent event) {
+		started = false;
 	}
 }
