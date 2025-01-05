@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "protrainer",
+  "version": "${version}",
+  "name": "Pro Trainer",
+  "description": "An addon for Meteor client and Boze Client that adds many blatant features.",
+  "authors": [
+    "Neki_play"
+  ],
+  "contact": {
+    "homepage": "https://github.com/MeteorClientPlus/MeteorPlus",
+    "issues": "https://github.com/MeteorClientPlus/MeteorPlus/issues",
+    "sources": "https://github.com/MeteorClientPlus/MeteorPlus/MeteorPlus",
+    "discord": "https://www.guilded.gg/i/27dAlJKk"
+  },
+  "license": "GPL-3.0",
+  "icon": "assets/protrainer/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+			"nekiplay.protrainer.ProTrainerAddon"
+    ]
+  },
+  "mixins": [
+    "protrainer.mixins.json"
+  ],
+  "accessWidener": "protrainer.accesswidener",
+  "custom": {
+    "meteor-client:color": "0,181,73",
+    "github:sha": "${gh_hash}",
+		"modmenu": {
+			"links": {
+				"modmenu.website": "https://meteorclientplus.github.io",
+				"modmenu.discord": "https://discord.gg/Y3ardRfJXr",
+				"Guilded": "https://www.guilded.gg/i/27dAlJKk"
+			},
+			"badges": [ "clientsideOnly" ]
+		}
+  },
+  "depends": {
+    "java": ">=17",
+    "minecraft": ">=${mc_version}"
+  }
+}

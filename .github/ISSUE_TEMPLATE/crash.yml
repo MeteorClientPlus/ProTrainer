@@ -1,0 +1,59 @@
+name: Crash
+description: Report a crash.
+title: '[Crash] '
+labels: crash
+body:
+  - type: textarea
+    id: mods
+    attributes:
+      label: Mod list
+      description: List of mods
+    validations:
+      required: true
+  - type: textarea
+    id: reproducing
+    attributes:
+      label: Steps to reproduce
+      description: How do you trigger this bug?
+      render: bash
+    validations:
+      required: true
+  - type: input
+    id: mod-version
+    attributes:
+      label: Meteor Plus Version
+    validations:
+      required: true
+  - type: input
+    id: mc-version
+    attributes:
+      label: Minecraft Version
+    validations:
+      required: true
+  - type: input
+    id: logs
+    attributes:
+      label: Logs (https://mclo.gs)
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-systems
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Before submitting a crash report
+      options:
+        - label: |
+            This crash wasn't already reported.
+          required: true
+        - label: |
+            This is a valid crash.
+          required: true

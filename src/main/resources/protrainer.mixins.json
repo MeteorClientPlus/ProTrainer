@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "nekiplay.protrainer.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+		"minecraft.PlayerMoveC2SPacketAccesor"
+  ]
+}
