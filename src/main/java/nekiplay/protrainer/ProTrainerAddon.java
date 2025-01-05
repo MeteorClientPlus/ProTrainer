@@ -24,12 +24,14 @@ public class ProTrainerAddon extends MeteorAddon {
 	public void onInitialize() {
 		instance = this;
 
-		LOG.info(METEOR_LOGPREFIX + " Initializing...");
+		LOG.info("Initializing...");
 
 
 		TrainerCommand command = new TrainerCommand();
 		Commands.add(command);
 		MeteorClient.EVENT_BUS.subscribe(command);
+
+		LOG.info("Initializing done");
 
 	}
 
