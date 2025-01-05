@@ -30,8 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class TrainerCommand extends Command {
@@ -44,7 +42,6 @@ public class TrainerCommand extends Command {
 	public Gson gson = new Gson();
 	public boolean started = false;
 	public Vec3d start_position = new Vec3d(0, 0, 0);
-	private final ExecutorService workerThread = Executors.newSingleThreadExecutor();
 
 	public List<BlockData> replaced = new ArrayList<>();
 
@@ -96,7 +93,6 @@ public class TrainerCommand extends Command {
 
 					} catch (JsonSyntaxException e) {
 						ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
-
 					}
 				} catch (IOException e) {
 					ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
@@ -113,17 +109,18 @@ public class TrainerCommand extends Command {
 		builder.then(literal("stop").executes(context -> {
 			if (!started) {
 				info("Parkour hasn't started");
+				replaced.clear();
 				return SINGLE_SUCCESS;
 			}
 			for (BlockData replace : replaced) {
 				BlockState state = Block.getStateFromRawId(replace.blockId);
 				BlockPos pos = new BlockPos((int) replace.blockPosition.x, (int) replace.blockPosition.y, (int) replace.blockPosition.z);
+				assert mc.world != null;
 				mc.world.setBlockState(pos, state);
-				mc.player.setPos(start_position.x, start_position.y, start_position.z);
 			}
 			mc.player.setPos(start_position.x, start_position.y, start_position.z);
-			started = false;
 			replaced.clear();
+			started = false;
 			info("Parkour has been stopped");
 			return SINGLE_SUCCESS;
 		}));
