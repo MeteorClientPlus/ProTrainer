@@ -16,3 +16,12 @@
 	<br>
 	1.8.9 Forge version - https://modrinth.com/mod/pro-trainer
 </div>
+
+## Commands
+| Command   | Description                      |
+|-----------|----------------------------------|
+| **trainer pos1**         | **Set save pos1** |
+| **trainer pos2**         | **Set save pos2** |
+| **trainer save <name>**  | **Save parkour**  |
+| **trainer start <name>** | **Start parkour** |
+| **trainer stop**         | **Stop parkour**  |
