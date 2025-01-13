@@ -12,4 +12,13 @@ public class BlockDataAndPosition {
 	public int hashCode() {
 		return blockPosition.hashCode();
 	}
+
+	public BlockDataAndPosition() {
+
+	}
+
+	public BlockDataAndPosition(BlockState state, BlockPos pos) {
+		this.blockId = Block.getRawIdFromState(state);
+		this.blockPosition = new BlockPosition(pos);
+	}
 }

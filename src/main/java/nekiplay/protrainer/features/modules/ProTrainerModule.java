@@ -16,11 +16,11 @@ public class ProTrainerModule extends Module {
 	public final Setting<Integer> loadingSpeed = defaultGroup.add(new IntSetting.Builder()
 		.name("loading-speed")
 		.description("World loading speed in blocks.")
-		.defaultValue(8)
+		.defaultValue(64)
 		.min(1)
-		.max(64)
+		.max(512)
 		.sliderMin(1)
-		.sliderMax(64)
+		.sliderMax(512)
 		.build()
 	);
 

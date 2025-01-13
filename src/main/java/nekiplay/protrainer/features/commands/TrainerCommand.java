@@ -18,6 +18,7 @@ import nekiplay.protrainer.data.ProTrainerMap;
 import nekiplay.protrainer.mixin.minecraft.PlayerMoveC2SPacketAccesor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.command.CommandSource;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.BlockPos;
@@ -236,9 +237,14 @@ public class TrainerCommand extends Command {
 	@EventHandler
 	private void onBlockUpdate(BlockUpdateEvent event) {
 		BlockPosition position = new BlockPosition(event.pos);
+		BlockDataAndPosition position2 = new BlockDataAndPosition(Blocks.AIR.getDefaultState(), event.pos);
 		if (map_blocks.containsKey(position) && started) {
 			BlockData data = map_blocks.get(position);
 			mc.world.setBlockState(event.pos, Block.getStateFromRawId(data.blockId));
+		}
+		if (started && replaced.contains(position2)) {
+			int index = replaced.indexOf(position2);
+			replaced.set(index, new BlockDataAndPosition(event.newState, event.pos));
 		}
 	}
 
