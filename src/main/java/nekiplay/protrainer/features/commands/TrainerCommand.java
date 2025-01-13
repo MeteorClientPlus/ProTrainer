@@ -110,12 +110,14 @@ public class TrainerCommand extends Command {
 
 						} catch (JsonSyntaxException e) {
 							ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
-
+							error("Incorect json syntax");
 						} catch (InterruptedException e) {
 							ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
+							error("Interrupted error");
 						}
 					} catch (IOException e) {
 						ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
+						error("IO error");
 					}
 					started = true;
 				}).start();
@@ -128,7 +130,7 @@ public class TrainerCommand extends Command {
 		})));
 		builder.then(literal("stop").executes(context -> {
 			if (!started) {
-				info("Parkour hasn't started");
+				warning("Parkour hasn't started");
 				return SINGLE_SUCCESS;
 			}
 			new Thread(() -> {
@@ -158,15 +160,14 @@ public class TrainerCommand extends Command {
 		}));
 		builder.then(literal("save").then(argument("map", StringArgumentType.string()).executes(context -> {
 			if (pos1 == null) {
-				info("Position 1 not established");
+				error("Position 1 not established");
 				return SINGLE_SUCCESS;
 			}
 			if (pos2 == null) {
-				info("Position 2 not established");
+				error("Position 2 not established");
 				return SINGLE_SUCCESS;
 			}
 			String map = context.getArgument("map", String.class);
-			Vec3d start = mc.player.getPos();
 			ProTrainerMap trainerMap = new ProTrainerMap();
 
 			List<BlockPos> blocks = collectBlocksBetween(mc.world, pos1, pos2);
@@ -193,14 +194,17 @@ public class TrainerCommand extends Command {
 					dir2.createNewFile();
 				} catch (IOException e) {
 					ProTrainerAddon.LOG.error(e.getLocalizedMessage());
+					error("Error creating file");
+					return SINGLE_SUCCESS;
 				}
 			}
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir2, false))) {
 				writer.write(gson.toJson(trainerMap));
+				info("Successfully saved");
 			} catch (IOException e) {
 				ProTrainerAddon.LOG.error(e.getLocalizedMessage());
+				error("Error saving map");
 			}
-			info("Successfully saved");
 			return SINGLE_SUCCESS;
 		})));
 	}
