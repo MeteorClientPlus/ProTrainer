@@ -6,12 +6,13 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
-import meteordevelopment.meteorclient.events.game.GameLeftEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
+import meteordevelopment.meteorclient.events.world.BlockUpdateEvent;
 import meteordevelopment.orbit.EventHandler;
 import nekiplay.Main;
 import nekiplay.protrainer.ProTrainerAddon;
 import nekiplay.protrainer.data.BlockData;
+import nekiplay.protrainer.data.BlockDataAndPosition;
 import nekiplay.protrainer.data.BlockPosition;
 import nekiplay.protrainer.data.ProTrainerMap;
 import nekiplay.protrainer.mixin.minecraft.PlayerMoveC2SPacketAccesor;
@@ -29,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,7 +45,8 @@ public class TrainerCommand extends Command {
 	public boolean started = false;
 	public Vec3d start_position = new Vec3d(0, 0, 0);
 
-	public List<BlockData> replaced = new ArrayList<>();
+	public List<BlockDataAndPosition> replaced = new ArrayList<>();
+	public HashMap<BlockPosition, BlockData> map_blocks = new HashMap<>();
 
 	public void build(LiteralArgumentBuilder<CommandSource> builder) {
 		builder.then(literal("pos1").executes(context -> {
@@ -69,36 +72,53 @@ public class TrainerCommand extends Command {
 					dir.mkdir();
 				}
 				File dir2 = new File(dir, map + ".json");
+
 				start_position = mc.player.getPos();
-				started = true;
-				try {
-					BufferedReader reader = Files.newBufferedReader(Path.of(dir2.toURI()), StandardCharsets.UTF_8);
+
+				new Thread(() -> {
 					try {
-						String json = reader.lines().collect(Collectors.joining());
+						map_blocks.clear();
+						BufferedReader reader = Files.newBufferedReader(Path.of(dir2.toURI()), StandardCharsets.UTF_8);
+						try {
+							String json = reader.lines().collect(Collectors.joining());
+							int counter = 0;
+							ProTrainerMap proTrainerMap = gson.fromJson(json, ProTrainerMap.class);
+							for (BlockDataAndPosition data : proTrainerMap.blocks) {
+								assert mc.world != null;
+								BlockState state = Block.getStateFromRawId(data.blockId);
+								mc.player.setPos(start_position.x, start_position.y, start_position.z);
+								BlockPos pos = new BlockPos((int) (data.blockPosition.x + mc.player.getBlockX()), (int) (data.blockPosition.y + mc.player.getBlockY()), (int) (data.blockPosition.z + mc.player.getBlockZ()));
 
-						ProTrainerMap proTrainerMap = gson.fromJson(json, ProTrainerMap.class);
-						for (BlockData data : proTrainerMap.blocks) {
-							assert mc.world != null;
-							BlockState state = Block.getStateFromRawId(data.blockId);
-							BlockPos pos = new BlockPos((int) (data.blockPosition.x + mc.player.getBlockX()), (int) (data.blockPosition.y + mc.player.getBlockY()), (int) (data.blockPosition.z + mc.player.getBlockZ()));
+								BlockDataAndPosition blockData = new BlockDataAndPosition();
+								blockData.blockPosition = new BlockPosition(pos);
+								blockData.blockId = Block.getRawIdFromState(mc.world.getBlockState(pos));
+								replaced.add(blockData);
+								map_blocks.put(new BlockPosition(pos), new BlockData(data.blockId));
 
-							BlockData blockData = new BlockData();
-							blockData.blockPosition = new BlockPosition(pos);
-							blockData.blockId = Block.getRawIdFromState(mc.world.getBlockState(pos));
-							replaced.add(blockData);
+								BlockState original_state = mc.world.getBlockState(pos);
+								if (original_state.getBlock() != state.getBlock()) {
+									mc.execute(() -> mc.world.setBlockState(pos, state));
+									if (counter >= ProTrainerAddon.getInstance().module.loadingSpeed.get()) {
+										Thread.sleep(1);
+										counter = 0;
+									} else {
+										counter++;
+									}
+								}
+							}
+							info("Successfully loaded");
 
-							mc.world.setBlockState(pos, state);
-							mc.player.setPos(start_position.x, start_position.y, start_position.z);
+						} catch (JsonSyntaxException e) {
+							ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
+
+						} catch (InterruptedException e) {
+							ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
 						}
-
-					} catch (JsonSyntaxException e) {
+					} catch (IOException e) {
 						ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
 					}
-				} catch (IOException e) {
-					ProTrainerAddon.LOG.error(Main.METEOR_LOGPREFIX + " Error in custom block: " + e);
-				}
-				mc.player.setPos(start_position.x, start_position.y, start_position.z);
-				info("Successfully loaded");
+					started = true;
+				}).start();
 				return SINGLE_SUCCESS;
 			}
 			else {
@@ -109,19 +129,31 @@ public class TrainerCommand extends Command {
 		builder.then(literal("stop").executes(context -> {
 			if (!started) {
 				info("Parkour hasn't started");
-				replaced.clear();
 				return SINGLE_SUCCESS;
 			}
-			for (BlockData replace : replaced) {
-				BlockState state = Block.getStateFromRawId(replace.blockId);
-				BlockPos pos = new BlockPos((int) replace.blockPosition.x, (int) replace.blockPosition.y, (int) replace.blockPosition.z);
-				assert mc.world != null;
-				mc.world.setBlockState(pos, state);
-			}
-			mc.player.setPos(start_position.x, start_position.y, start_position.z);
-			replaced.clear();
-			started = false;
-			info("Parkour has been stopped");
+			new Thread(() -> {
+				int counter = 0;
+				map_blocks.clear();
+				for (BlockDataAndPosition replace : replaced) {
+					BlockState state = Block.getStateFromRawId(replace.blockId);
+					BlockPos pos = new BlockPos((int) replace.blockPosition.x, (int) replace.blockPosition.y, (int) replace.blockPosition.z);
+					mc.execute(() -> mc.world.setBlockState(pos, state));
+					if (counter >= ProTrainerAddon.getInstance().module.loadingSpeed.get()) {
+						try {
+							Thread.sleep(1);
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+						counter = 0;
+					} else {
+						counter++;
+					}
+				}
+				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+				started = false;
+				replaced.clear();
+				info("Parkour has been stopped");
+			}).start();
 			return SINGLE_SUCCESS;
 		}));
 		builder.then(literal("save").then(argument("map", StringArgumentType.string()).executes(context -> {
@@ -136,7 +168,7 @@ public class TrainerCommand extends Command {
 			String map = context.getArgument("map", String.class);
 			Vec3d start = mc.player.getPos();
 			ProTrainerMap trainerMap = new ProTrainerMap();
-			trainerMap.start = new BlockPosition(start);
+
 			List<BlockPos> blocks = collectBlocksBetween(mc.world, pos1, pos2);
 			List<BlockPos> sortedBlocks = new ArrayList<>();
 			for (BlockPos pos : blocks) {
@@ -145,7 +177,7 @@ public class TrainerCommand extends Command {
 			for (BlockPos sorted : sortedBlocks) {
 				var unsorted = sorted.add(new Vec3i(mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ()));
 				BlockState state = mc.world.getBlockState(unsorted);
-				BlockData blockData = new BlockData();
+				BlockDataAndPosition blockData = new BlockDataAndPosition();
 				blockData.blockId = Block.getRawIdFromState(state);
 				blockData.blockPosition = new BlockPosition(sorted);
 				trainerMap.blocks.add(blockData);
@@ -198,6 +230,15 @@ public class TrainerCommand extends Command {
 	}
 
 	@EventHandler
+	private void onBlockUpdate(BlockUpdateEvent event) {
+		BlockPosition position = new BlockPosition(event.pos);
+		if (map_blocks.containsKey(position) && started) {
+			BlockData data = map_blocks.get(position);
+			mc.world.setBlockState(event.pos, Block.getStateFromRawId(data.blockId));
+		}
+	}
+
+	@EventHandler
 	private void onSendPacket(PacketEvent.Send event) {
 		if (event.packet instanceof PlayerMoveC2SPacket playerMoveC2SPacket) {
 			if (started) {
@@ -208,10 +249,5 @@ public class TrainerCommand extends Command {
 				accesor.setOnGround(true);
 			}
 		}
-	}
-
-	@EventHandler
-	private void onGameLeft(GameLeftEvent event) {
-		started = false;
 	}
 }

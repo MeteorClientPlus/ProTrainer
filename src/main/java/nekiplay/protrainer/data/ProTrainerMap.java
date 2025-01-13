@@ -1,9 +1,10 @@
 package nekiplay.protrainer.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ProTrainerMap {
-	public ArrayList<BlockData> blocks = new ArrayList<>();
-	public BlockPosition start = new BlockPosition();
+	public List<BlockDataAndPosition> blocks = new ArrayList<>();
+
 
 }

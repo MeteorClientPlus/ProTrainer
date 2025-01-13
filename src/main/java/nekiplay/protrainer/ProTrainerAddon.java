@@ -3,7 +3,9 @@ package nekiplay.protrainer;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.commands.Commands;
+import meteordevelopment.meteorclient.systems.modules.Modules;
 import nekiplay.protrainer.features.commands.TrainerCommand;
+import nekiplay.protrainer.features.modules.ProTrainerModule;
 import net.fabricmc.loader.api.FabricLoader;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
 import org.slf4j.Logger;
@@ -20,12 +22,15 @@ public class ProTrainerAddon extends MeteorAddon {
 		return instance;
 	}
 
+	public ProTrainerModule module = new ProTrainerModule();
+
 	@Override
 	public void onInitialize() {
 		instance = this;
 
 		LOG.info("Initializing...");
 
+		Modules.get().add(module);
 
 		TrainerCommand command = new TrainerCommand();
 		Commands.add(command);
