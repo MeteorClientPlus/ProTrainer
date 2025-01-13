@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class TrainerCommand extends Command {
@@ -44,7 +45,7 @@ public class TrainerCommand extends Command {
 	public BlockPos pos2 = null;
 	public Gson gson = new Gson();
 	public boolean started = false;
-	public Vec3d start_position = new Vec3d(0, 0, 0);
+	public Vec3d start_position = new Vec3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
 	public List<BlockDataAndPosition> replaced = new ArrayList<>();
 	public HashMap<BlockPosition, BlockData> map_blocks = new HashMap<>();
@@ -58,6 +59,15 @@ public class TrainerCommand extends Command {
 		builder.then(literal("pos2").executes(context -> {
 			pos2 = mc.player.getBlockPos();
 			info("Position 2 established");
+			return SINGLE_SUCCESS;
+		}));
+		builder.then(literal("spawn").executes(context -> {
+			if (started) {
+				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+			}
+			else {
+				warning("Parkour hasn't started");
+			}
 			return SINGLE_SUCCESS;
 		}));
 		builder.then(literal("start").then(argument("map", StringArgumentType.string()).executes(context -> {
@@ -251,7 +261,7 @@ public class TrainerCommand extends Command {
 	@EventHandler
 	private void onSendPacket(PacketEvent.Send event) {
 		if (event.packet instanceof PlayerMoveC2SPacket playerMoveC2SPacket) {
-			if (started) {
+			if (started && !Objects.equals(start_position, new Vec3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY))) {
 				PlayerMoveC2SPacketAccesor accesor = (PlayerMoveC2SPacketAccesor) playerMoveC2SPacket;
 				accesor.setX(start_position.x);
 				accesor.setY(start_position.y);
