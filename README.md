@@ -5,7 +5,7 @@
 	<br>
 		An addon for <a href="https://github.com/MeteorDevelopment/meteor-client">Meteor client</a> adding parkour to any server
 	<br>
-	<a href="https://www.minecraft.net/"><img src="https://img.shields.io/badge/minecraft%20version-1.21.1 -- 1.21.3-brightgreen" alt="Minecraft version"/></a>
+	<a href="https://www.minecraft.net/"><img src="https://img.shields.io/badge/minecraft%20version-1.21.1 -- 1.21.4-brightgreen" alt="Minecraft version"/></a>
 	<a href="https://github.com/Nekiplay/MeteorClientPlus/releases"><img src="https://img.shields.io/github/downloads/MeteorClientPlus/ProTrainer/total" alt="Downloads"/></a>
 	<a href="https://github.com/Nekiplay/MeteorClientPlus/stargazers"><img src="https://badgen.net/github/stars/MeteorClientPlus/ProTrainer" alt="GitHub stars"/></a>
 	<br>
