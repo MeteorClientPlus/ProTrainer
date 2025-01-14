@@ -8,7 +8,9 @@ import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.events.entity.player.PlayerMoveEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
+import meteordevelopment.meteorclient.events.render.Render2DEvent;
 import meteordevelopment.meteorclient.events.world.BlockUpdateEvent;
+import meteordevelopment.meteorclient.utils.render.NametagUtils;
 import meteordevelopment.orbit.EventHandler;
 import nekiplay.Main;
 import nekiplay.protrainer.ProTrainerAddon;
@@ -26,6 +28,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
+import org.joml.Vector3d;
+import meteordevelopment.meteorclient.renderer.text.TextRenderer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +51,7 @@ public class TrainerCommand extends Command {
 	public Gson gson = new Gson();
 	public boolean started = false;
 	public Vec3d start_position = new Vec3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
+	public Vec3d spawnpoint_position = new Vec3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
 	public List<BlockDataAndPosition> replaced = new ArrayList<>();
 	public HashMap<BlockPosition, BlockData> map_blocks = new HashMap<>();
@@ -71,6 +76,15 @@ public class TrainerCommand extends Command {
 			}
 			return SINGLE_SUCCESS;
 		}));
+		builder.then(literal("spawnpoint").executes(context -> {
+			if (started) {
+				mc.player.setPos(spawnpoint_position.x, spawnpoint_position.y, spawnpoint_position.z);
+			}
+			else {
+				warning("Parkour hasn't started");
+			}
+			return SINGLE_SUCCESS;
+		}));
 		builder.then(literal("start").then(argument("map", StringArgumentType.string()).executes(context -> {
 			if (started) {
 				error("Parkour has already begun");
@@ -85,7 +99,9 @@ public class TrainerCommand extends Command {
 				}
 				File dir2 = new File(dir, map + ".json");
 
-				start_position = mc.player.getPos();
+				Vec3d player_pos = mc.player.getPos();
+				start_position = new Vec3d(player_pos.x, player_pos.y + 2, player_pos.z);
+				spawnpoint_position = new Vec3d(player_pos.x, player_pos.y + 2, player_pos.z);
 
 				new Thread(() -> {
 					try {
@@ -248,19 +264,19 @@ public class TrainerCommand extends Command {
 	@EventHandler
 	private void onPlayerMove(PlayerMoveEvent event) {
 		BlockPos pos = mc.player.getBlockPos();
-		BlockPos pos_down = pos.down();
 
 		BlockState state = mc.world.getBlockState(pos);
-		BlockState state_down = mc.world.getBlockState(pos_down);
 
 		if (started) {
 			var module = ProTrainerAddon.getInstance().module;
 
 			if (module.respawnBlocks.get().contains(state.getBlock())) {
-				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+				mc.player.setPos(spawnpoint_position.x, spawnpoint_position.y, spawnpoint_position.z);
+				mc.player.setVelocity(0, 0, 0);
 			}
-			if (module.respawnBlocks.get().contains(state_down.getBlock())) {
-				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+
+			if (module.checkPointsBlocks.get().contains(state.getBlock())) {
+				spawnpoint_position = new Vec3d(pos.getX() + 0.5, pos.getY() + 1, + pos.getZ() + 0.5);
 			}
 		}
  	}
@@ -276,6 +292,36 @@ public class TrainerCommand extends Command {
 		if (started && replaced.contains(position2)) {
 			int index = replaced.indexOf(position2);
 			replaced.set(index, new BlockDataAndPosition(event.newState, event.pos));
+		}
+	}
+
+	@EventHandler
+	private void on2DRender(Render2DEvent event) {
+		if (started) {
+			Vec3d camera_pos = mc.gameRenderer.getCamera().getPos();
+			Vector3d pos2 = new Vector3d(spawnpoint_position.x, spawnpoint_position.y, spawnpoint_position.z);
+			if (pos2.distance(camera_pos.x, camera_pos.y, camera_pos.z) <= ProTrainerAddon.getInstance().module.spawnpointTextRenderDistance.get()) {
+				if (NametagUtils.to2D(pos2, 1, true)) {
+					TextRenderer text = TextRenderer.get();
+					NametagUtils.begin(pos2);
+					text.beginBig();
+
+					String hologram_text = "Spawnpoint";
+					double hologramWidth = text.getWidth(hologram_text, true);
+					double heightDown = text.getHeight(true);
+
+					double widthHalf = hologramWidth / 2;
+
+
+					double hX = -widthHalf;
+					double hY = -heightDown;
+
+					text.render(hologram_text, hX, hY, ProTrainerAddon.getInstance().module.spawnpointTextColor.get(), true);
+
+					text.end();
+					NametagUtils.end();
+				}
+			}
 		}
 	}
 

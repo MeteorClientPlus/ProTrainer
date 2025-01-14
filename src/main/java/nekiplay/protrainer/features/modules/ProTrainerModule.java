@@ -1,11 +1,9 @@
 package nekiplay.protrainer.features.modules;
 
-import meteordevelopment.meteorclient.settings.BlockListSetting;
-import meteordevelopment.meteorclient.settings.IntSetting;
-import meteordevelopment.meteorclient.settings.Setting;
-import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 
@@ -17,6 +15,7 @@ public class ProTrainerModule extends Module {
 	}
 
 	private final SettingGroup defaultGroup = settings.getDefaultGroup();
+	private final SettingGroup spawnpointsGroup = settings.createGroup("Spawnpoints");
 	private final SettingGroup respawnGroup = settings.createGroup("Respawning");
 
 	public final Setting<Integer> loadingSpeed = defaultGroup.add(new IntSetting.Builder()
@@ -31,8 +30,26 @@ public class ProTrainerModule extends Module {
 	);
 	public final Setting<List<Block>> respawnBlocks = respawnGroup.add(new BlockListSetting.Builder()
 		.name("respawn-blocks")
-		.description("The blocks you don't want to mine.")
-		.defaultValue(List.of(Blocks.LAVA))
+		.defaultValue(List.of(Blocks.LAVA, Blocks.MAGMA_BLOCK))
+		.build()
+	);
+	public final Setting<List<Block>> checkPointsBlocks = respawnGroup.add(new BlockListSetting.Builder()
+		.name("checkpoint-blocks")
+		.defaultValue(List.of(Blocks.LIGHT_WEIGHTED_PRESSURE_PLATE))
+		.build()
+	);
+
+	public final Setting<SettingColor> spawnpointTextColor = spawnpointsGroup.add(new ColorSetting.Builder()
+		.name("spawnpoint-text-color")
+		.defaultValue(new SettingColor(255, 0, 0, 255))
+		.build()
+	);
+
+	public final Setting<Double> spawnpointTextRenderDistance = spawnpointsGroup.add(new DoubleSetting.Builder()
+		.name("spawnpoint-text-render-distance")
+		.defaultValue(32)
+		.max(64)
+		.sliderRange(0, 64)
 		.build()
 	);
 }
