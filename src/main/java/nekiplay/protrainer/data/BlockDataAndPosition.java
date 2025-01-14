@@ -21,4 +21,8 @@ public class BlockDataAndPosition {
 		this.blockId = Block.getRawIdFromState(state);
 		this.blockPosition = new BlockPosition(pos);
 	}
+
+	public BlockState toBlockState() {
+		return Block.getStateFromRawId(blockId);
+	}
 }

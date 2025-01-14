@@ -42,7 +42,7 @@ dependencies {
 	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
 
 	// Meteor Client
-	modImplementation files("libs\\meteor-client-0.5.8-2200.jar")
+	modImplementation files("libs\\meteor-client-0.5.9-2203.jar")
 }
 
 loom {
