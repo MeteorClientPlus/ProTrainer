@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Command;
+import meteordevelopment.meteorclient.events.entity.player.PlayerMoveEvent;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.events.world.BlockUpdateEvent;
 import meteordevelopment.orbit.EventHandler;
@@ -243,6 +244,26 @@ public class TrainerCommand extends Command {
 
 		return blocks;
 	}
+
+	@EventHandler
+	private void onPlayerMove(PlayerMoveEvent event) {
+		BlockPos pos = mc.player.getBlockPos();
+		BlockPos pos_down = pos.down();
+
+		BlockState state = mc.world.getBlockState(pos);
+		BlockState state_down = mc.world.getBlockState(pos_down);
+
+		if (started) {
+			var module = ProTrainerAddon.getInstance().module;
+
+			if (module.respawnBlocks.get().contains(state.getBlock())) {
+				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+			}
+			if (module.respawnBlocks.get().contains(state_down.getBlock())) {
+				mc.player.setPos(start_position.x, start_position.y, start_position.z);
+			}
+		}
+ 	}
 
 	@EventHandler
 	private void onBlockUpdate(BlockUpdateEvent event) {
