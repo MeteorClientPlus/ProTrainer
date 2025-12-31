@@ -39,7 +39,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Mixin extras
-	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.0")))
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.2")))
 
 	// Meteor Client
 	modImplementation files("libs\\meteor-client-0.5.9.jar")
